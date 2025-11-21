@@ -8,6 +8,8 @@ import Register from "../Pages/Register";
 import PrivateRoute from "../Context.jsx/PrivateRoute";
 import Rider from "../Pages/Rider";
 import SendParcel from "../Pages/SendParcel";
+import DashboardLayout from "../Layouts/DashboardLayout";
+import MyParcels from "../Pages/MyParcels";
 
 export const router = createBrowserRouter([
     {
@@ -26,7 +28,7 @@ export const router = createBrowserRouter([
             {
                 path: '/send-parcel',
                 element: <SendParcel />,
-                loader: () => fetch('https://bdapi.vercel.app/api/v.1/district')
+                loader: () => fetch('./warehouses.json')
             },
             {
                 path: '/rider',
@@ -47,6 +49,18 @@ export const router = createBrowserRouter([
             {
                 path: '/register',
                 Component: Register
+            }
+        ]
+    },
+    {
+        path: 'dashboard',
+        element: <PrivateRoute>
+            <DashboardLayout />
+        </PrivateRoute>,
+        children: [
+            {
+                path: 'my-parcels',
+                element: <MyParcels /> 
             }
         ]
     }

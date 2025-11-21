@@ -1,17 +1,56 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useLoaderData } from 'react-router';
+import useAxiosSecure from '../hooks/useAxiosSecure';
 
 const SendParcel = () => {
-    const district = useLoaderData()
+    const { register, handleSubmit, watch } = useForm()
 
+    const axiosSecure = useAxiosSecure()
 
-    const { register, handleSubmit, formState: { errors } } = useForm()
+    const serviceCenters = useLoaderData();
+    const regionsDuplicate = serviceCenters.map(c => c.region);
 
-    const handleSendParcel = (data) => {
-console.log(data)
+    const regions = [...new Set(regionsDuplicate)];
+    const senderRegion = watch('senderDistrict');
+    const recieverRegion = watch('receiverDistrict')
+    //const receiverRegion = useWatch({ control, name: 'receiverRegion' })
+
+    const districtByRegion = (region) => {
+        const regionDistrict = serviceCenters.filter(r => r.region === region)
+        const districts = regionDistrict.map(d => d.district);
+        return districts;
     }
 
+
+    const handleSendParcel = (data) => {
+        const isDocument = data.parcelType === 'Document'
+        const isSameDistrict = data.senderDistrict === data.receiverDistrict
+        const parcelWeight = parseFloat(data.parcelWeight);
+
+        let cost = 0;
+        if (isDocument) {
+            cost = isSameDistrict ? 60 : 80;
+        }
+        else {
+            if (parcelWeight < 3) {
+                cost = isSameDistrict ? 110 : 150;
+            }
+            else {
+                const minCharge = isSameDistrict ? 110 : 150;
+                const extraWeight = parcelWeight - 3;
+                const extraCharge = isSameDistrict ? extraWeight * 40 : extraWeight * 40 + 40;
+
+                cost = minCharge + extraCharge;
+            }
+            console.log('cost', cost)
+        }
+
+        axiosSecure.post('/parcels', data)
+            .then(res => {
+                console.log('after saving parcel', res.data);
+            })
+    }
     return (
         <div className="container mx-auto p-4 md:p-8 max-w-4xl">
 
@@ -90,13 +129,21 @@ console.log(data)
                             <input type="text" {...register('senderAddress')} placeholder="Address" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150" />
 
                             {/* Phone No */}
-                            <input type="tel" {...register('senderPhoneNo')}  placeholder="Sender Phone No" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150" />
+                            <input type="tel" {...register('senderPhoneNo')} placeholder="Sender Phone No" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150" />
 
                             {/* District Dropdown */}
                             <select {...register('senderDistrict')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150 bg-white">
                                 <option disabled selected>Select your District</option>
                                 {
-                                    district.data.map(dist => <option>{dist.name}</option>)
+                                    regions.map((r, i) => <option key={i} value={r}>{r}</option>)
+                                }
+                            </select>
+
+                            {/* District Dropdown */}
+                            <select {...register('senderRegion')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150 bg-white">
+                                <option disabled selected>Select your District</option>
+                                {
+                                    districtByRegion(senderRegion).map((r, i) => <option key={i} value={r}>{r}</option>)
                                 }
                             </select>
                         </div>
@@ -115,10 +162,17 @@ console.log(data)
                             <input type="tel" {...register('receiverContactNo')} placeholder="Receiver Contact No" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150" />
 
                             {/* District Dropdown */}
-                            <select {...register('receiverDistrict')}  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150 bg-white">
+                            <select {...register('receiverDistrict')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150 bg-white">
                                 <option disabled selected>Receiver District</option>
                                 {
-                                    district.data.map(dist => <option>{dist.name}</option>)
+                                    regions.map((r, i) => <option key={i} value={r}>{r}</option>)
+                                }
+                            </select>
+
+                            <select {...register('receiverRegion')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150 bg-white">
+                                <option disabled selected>Receiver District</option>
+                                {
+                                    districtByRegion(recieverRegion).map((d, i) => <option key={i} value={d}>{d}</option>)
                                 }
                             </select>
                         </div>
@@ -133,7 +187,7 @@ console.log(data)
                         rows="4"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-400 focus:border-green-400 outline-none transition duration-150"
                     ></textarea>
-                    
+
                     {/* Delivery Instruction */}
                     <textarea
                         placeholder="Delivery Instruction"
@@ -156,5 +210,4 @@ console.log(data)
         </div>
     );
 };
-
 export default SendParcel;

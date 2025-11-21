@@ -15,13 +15,19 @@ const Navbar = () => {
             })
     }
     const link = <>
-        <li><NavLink>Home</NavLink></li>
+        <li><NavLink to={'/'}>Home</NavLink></li>
         <li><NavLink>Service</NavLink></li>
         <li><NavLink to={'/coverage'}>Coverage</NavLink></li>
         <li><NavLink>About Us</NavLink></li>
         <li><NavLink>Pricing</NavLink></li>
         <li><NavLink to={'/send-parcel'}>Send Parcel</NavLink></li>
         <li><NavLink>Be a Rider</NavLink></li>
+
+        {
+            user && <>
+             <li><NavLink to={'/dashboard/my-parcels'}>My Parcels</NavLink></li>
+            </>
+        }
     </>
     return (
         <Container>
